@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfficeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">office-service</a> &gt; <a href="index.source.html" class="el_package">com.axity.office.service.impl</a> &gt; <span class="el_source">OfficeServiceImpl.java</span></div><h1>OfficeServiceImpl.java</h1><pre class="source lang-java linenums">package com.axity.office.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.axity.office.commons.dto.OfficeDto;
+import com.axity.office.commons.enums.ErrorCode;
+import com.axity.office.commons.exception.BusinessException;
+import com.axity.office.commons.request.MessageDto;
+import com.axity.office.commons.request.PaginatedRequestDto;
+import com.axity.office.commons.response.GenericResponseDto;
+import com.axity.office.commons.response.PaginatedResponseDto;
+import com.axity.office.model.OfficeDO;
+import com.axity.office.model.QOfficeDO;
+import com.axity.office.persistence.OfficePersistence;
+import com.axity.office.service.OfficeService;
+import com.github.dozermapper.core.Mapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Class OfficeServiceImpl
+ * 
+ * @author username@axity.com
+ */
+@Service
+@Transactional
+<span class="fc" id="L42">@Slf4j</span>
+<span class="fc" id="L43">public class OfficeServiceImpl implements OfficeService</span>
+{
+  @Autowired
+  private OfficePersistence officePersistence;
+
+  @Autowired
+  private Mapper mapper;
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PaginatedResponseDto&lt;OfficeDto&gt; findOffices( PaginatedRequestDto request )
+  {
+<span class="fc" id="L57">    log.debug( &quot;%s&quot;, request );</span>
+
+<span class="fc" id="L59">    int page = request.getOffset() / request.getLimit();</span>
+<span class="fc" id="L60">    Pageable pageRequest = PageRequest.of( page, request.getLimit(), Sort.by( &quot;id&quot; ) );</span>
+
+<span class="fc" id="L62">    var paged = this.officePersistence.findAll( pageRequest );</span>
+
+<span class="fc" id="L64">    var result = new PaginatedResponseDto&lt;OfficeDto&gt;( page, request.getLimit(), paged.getTotalElements() );</span>
+
+<span class="fc" id="L66">    paged.stream().forEach( x -&gt; result.getData().add( this.transform( x ) ) );</span>
+
+<span class="fc" id="L68">    return result;</span>
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public GenericResponseDto&lt;OfficeDto&gt; find( Integer id )
+  {
+<span class="fc" id="L77">    GenericResponseDto&lt;OfficeDto&gt; response = null;</span>
+
+<span class="fc" id="L79">    var optional = this.officePersistence.findById( id );</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">    if( optional.isPresent() )</span>
+    {
+<span class="fc" id="L82">      response = new GenericResponseDto&lt;&gt;();</span>
+<span class="fc" id="L83">      response.setBody( this.transform( optional.get() ) );</span>
+    }
+
+<span class="fc" id="L86">    return response;</span>
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public GenericResponseDto&lt;OfficeDto&gt; create( OfficeDto dto )
+  {
+
+<span class="fc" id="L96">    OfficeDO entity = new OfficeDO();</span>
+<span class="fc" id="L97">    this.mapper.map( dto, entity );</span>
+<span class="fc" id="L98">    entity.setId(null);</span>
+
+<span class="nc" id="L100">    this.officePersistence.save( entity );</span>
+
+<span class="nc" id="L102">    dto.setId(entity.getId());</span>
+
+<span class="nc" id="L104">    return new GenericResponseDto&lt;&gt;( dto );</span>
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public GenericResponseDto&lt;Boolean&gt; update( OfficeDto dto )
+  {
+<span class="fc" id="L113">    var optional = this.officePersistence.findById( dto.getId() );</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    if( optional.isEmpty() )</span>
+    {
+<span class="fc" id="L116">      throw new BusinessException( ErrorCode.OFFICE_NOT_FOUND );</span>
+    }
+
+<span class="fc" id="L119">    var entity = optional.get();</span>
+    
+    
+<span class="fc" id="L122">    entity.setCity( dto.getCity() );</span>
+<span class="fc" id="L123">    entity.setPhone( dto.getPhone() );</span>
+<span class="fc" id="L124">    entity.setAddressLine1( dto.getAddressLine1() );</span>
+<span class="fc" id="L125">    entity.setAddressLine2( dto.getAddressLine2() );</span>
+<span class="fc" id="L126">    entity.setState( dto.getState() );</span>
+    // TODO: Actualizar entity.Country (?) 
+<span class="fc" id="L128">    entity.setPostalCode( dto.getPostalCode() );</span>
+
+<span class="fc" id="L130">    this.officePersistence.save( entity );</span>
+
+<span class="fc" id="L132">    return new GenericResponseDto&lt;&gt;( true );</span>
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public GenericResponseDto&lt;Boolean&gt; delete( Integer id )
+  {
+<span class="fc" id="L141">    var optional = this.officePersistence.findById( id );</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">    if( optional.isEmpty() )</span>
+    {
+<span class="fc" id="L144">      throw new BusinessException( ErrorCode.OFFICE_NOT_FOUND );</span>
+    }
+
+<span class="nc" id="L147">    var entity = optional.get();</span>
+<span class="nc" id="L148">    this.officePersistence.delete( entity );</span>
+
+<span class="nc" id="L150">    return new GenericResponseDto&lt;&gt;( true );</span>
+  }
+
+  private OfficeDto transform( OfficeDO entity )
+  {
+<span class="fc" id="L155">    OfficeDto dto = null;</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">    if( entity != null )</span>
+    {
+<span class="fc" id="L158">      dto = this.mapper.map( entity, OfficeDto.class );</span>
+    }
+<span class="fc" id="L160">    return dto;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
