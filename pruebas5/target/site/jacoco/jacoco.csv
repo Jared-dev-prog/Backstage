@@ -1,0 +1,8 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+office-service,com.axity.office.service.util,DozerConfig,0,12,0,0,0,4,0,2,0,2
+office-service,com.axity.office.service.util,MessageSerializer,3,0,0,0,1,0,1,0,1,0
+office-service,com.axity.office.service.impl,OfficeServiceImpl,28,175,2,6,6,37,2,11,0,9
+office-service,com.axity.office.service.impl,RoleServiceImpl,28,155,2,6,6,32,2,11,0,9
+office-service,com.axity.office.service.impl,UserServiceImpl,28,167,2,6,6,35,2,11,0,9
+office-service,com.axity.office.service.impl,CountryServiceImpl,28,155,2,6,6,32,2,11,0,9
+office-service,com.axity.office.service.impl,TerritoryServiceImpl,28,155,2,6,6,32,2,11,0,9
